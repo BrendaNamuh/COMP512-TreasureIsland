@@ -1,0 +1,17 @@
+Oct 15, 2025 1:13:26.506102017 PM comp512st.tiapp.TreasureIslandApp main INFO: Started with arguments : [teach-node-05:40103, teach-node-05:40103,server2:40203, game-03-99, 2, 1]
+Oct 15, 2025 1:13:26.803801325 PM comp512.utils.FailCheck <init> INFO: Initializing failure check emulation setup....
+Oct 15, 2025 1:13:27.021586848 PM comp512.gcl.GCL checkProcessArguments SEVERE: UnknownHostException while trying to resolve the hostname of group process server2:40203java.net.UnknownHostException: server2: Temporary failure in name resolution
+java.net.UnknownHostException: server2: Temporary failure in name resolution
+	at java.base/java.net.Inet6AddressImpl.lookupAllHostAddr(Native Method)
+	at java.base/java.net.Inet6AddressImpl.lookupAllHostAddr(Inet6AddressImpl.java:52)
+	at java.base/java.net.InetAddress$PlatformResolver.lookupByName(InetAddress.java:1211)
+	at java.base/java.net.InetAddress.getAddressesFromNameService(InetAddress.java:1828)
+	at java.base/java.net.InetAddress$NameServiceAddresses.get(InetAddress.java:1139)
+	at java.base/java.net.InetAddress.getAllByName0(InetAddress.java:1818)
+	at java.base/java.net.InetAddress.getAllByName(InetAddress.java:1688)
+	at java.base/java.net.InetAddress.getByName(InetAddress.java:1568)
+	at comp512.gcl.GCL.checkProcessArguments(GCL.java:570)
+	at comp512.gcl.GCL.<init>(GCL.java:595)
+	at comp512st.paxos.Paxos.<init>(Paxos.java:30)
+	at comp512st.tiapp.TreasureIslandApp.main(TreasureIslandApp.java:119)
+
