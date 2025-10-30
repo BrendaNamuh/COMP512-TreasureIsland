@@ -314,8 +314,8 @@ public class Paxos {
     }
 
     private synchronized long generateProposalNumber() {
-        long processHash = Math.abs(myProcess.hashCode() % 10000);
-        return (proposalCounter++ * 100000) + processHash;
+        long processHash = Math.abs(myProcess.hashCode() % 10000); // % 10000 limits value to 4 digits
+        return (proposalCounter++ * 100000) + processHash; // * 100000 allows first 4 digits of result to represent proposalCounter and last 4 digits to represent hashCode
     }
 
     private synchronized int getNextSequenceNumber() {
