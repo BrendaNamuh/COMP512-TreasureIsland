@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #TODO Edit this dir name to where your comp512.jar and build_tiapp.sh script are.
-BASEDIR=/Users/bn/Downloads/p2-students/comp512p2
+BASEDIR=/home/2024/ahuynh17/COMP512-TreasureIsland-1
 
 if [[ ! -d $BASEDIR ]]
 then

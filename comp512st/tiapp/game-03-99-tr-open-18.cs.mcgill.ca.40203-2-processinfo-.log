@@ -1,0 +1,132 @@
+Nov 02, 2025 3:57:18.346115986 PM comp512st.tiapp.TreasureIslandApp main INFO: Started with arguments : [tr-open-18.cs.mcgill.ca:40203, tr-open-11.cs.mcgill.ca:40103,tr-open-18.cs.mcgill.ca:40203, game-03-99, 2, 2]
+Nov 02, 2025 3:57:18.354863963 PM comp512.utils.FailCheck <init> INFO: Initializing failure check emulation setup....
+Nov 02, 2025 3:57:18.377616213 PM comp512.gcl.GCL <init> INFO: Host tr-open-18.cs.mcgill.ca/10.69.38.168:40203
+Nov 02, 2025 3:57:18.378336970 PM comp512.gcl.GCL <init> INFO: Initializing outbox despatcher threads.
+Nov 02, 2025 3:57:18.379967328 PM comp512.gcl.GCL$GCLOutBoxDespatcher run INFO: tr-open-11.cs.mcgill.ca:40103: Starting outbox despatch thread for process.
+Nov 02, 2025 3:57:18.380001535 PM comp512.gcl.GCL$GCLOutBoxDespatcher run INFO: tr-open-18.cs.mcgill.ca:40203: Starting outbox despatch thread for process.
+Nov 02, 2025 3:57:18.386772554 PM comp512.ti.TreasureIsland <init> INFO: Treasure Island initialized.
+Nov 02, 2025 3:57:23.035258729 PM comp512.gcl.GCL$InboxListener run INFO: Network connection request from  /10.69.38.161
+Nov 02, 2025 3:57:23.048802763 PM comp512.gcl.GCL$InboxListener run INFO: tr-open-11.cs.mcgill.ca:40103: Input stream set up for this process to receive incoming messages. Inet: /10.69.38.161
+Nov 02, 2025 3:57:23.050539749 PM comp512.gcl.GCL$GCLInbox run INFO: tr-open-11.cs.mcgill.ca:40103: Starting an inBox thread to receive messages from this process.
+Nov 02, 2025 3:57:23.112743341 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@6c81d811]
+Nov 02, 2025 3:57:23.113398778 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@6c81d811]
+Nov 02, 2025 3:57:23.113895326 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@c7af404
+Nov 02, 2025 3:57:23.119805689 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@c7af404]
+Nov 02, 2025 3:57:23.135131116 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@7eb267f0]
+Nov 02, 2025 3:57:23.135690420 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@7eb267f0]
+Nov 02, 2025 3:57:23.136035184 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@2bd1bfb
+Nov 02, 2025 3:57:23.136450083 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@2bd1bfb]
+Nov 02, 2025 3:57:23.236501250 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@87a0320]
+Nov 02, 2025 3:57:23.237096828 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@87a0320]
+Nov 02, 2025 3:57:23.241680548 PM comp512st.paxos.Paxos acceptTOMsg INFO: Delivering sequence 0: [Ljava.lang.Object;@3e2d7248
+Nov 02, 2025 3:57:23.242124483 PM comp512st.tiapp.TreasureIslandApp run FINE: Received :[1, R]
+Nov 02, 2025 3:57:23.242642734 PM comp512.ti.TreasureIsland move INFO: Move request: player number 1 direction R
+Nov 02, 2025 3:57:23.243294865 PM comp512.ti.TreasureIsland move INFO: Player A got treasure points 1
+Nov 02, 2025 3:57:24.018982572 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@b38e2a0]
+Nov 02, 2025 3:57:24.019521851 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@b38e2a0]
+Nov 02, 2025 3:57:24.019819134 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@6829f74
+Nov 02, 2025 3:57:24.020058930 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@6829f74]
+Nov 02, 2025 3:57:24.119993093 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@699bf286]
+Nov 02, 2025 3:57:24.120981180 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@699bf286]
+Nov 02, 2025 3:57:24.121550842 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@438011c0
+Nov 02, 2025 3:57:24.122199311 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@438011c0]
+Nov 02, 2025 3:57:24.221870966 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@4fb85a2]
+Nov 02, 2025 3:57:24.223168632 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@4fb85a2]
+Nov 02, 2025 3:57:24.224204341 PM comp512st.paxos.Paxos acceptTOMsg INFO: Delivering sequence 1: [Ljava.lang.Object;@61ee15d2
+Nov 02, 2025 3:57:24.224906481 PM comp512st.tiapp.TreasureIslandApp run FINE: Received :[1, R]
+Nov 02, 2025 3:57:24.225493463 PM comp512.ti.TreasureIsland move INFO: Move request: player number 1 direction R
+Nov 02, 2025 3:57:24.875361616 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@5cc0e51e]
+Nov 02, 2025 3:57:24.876348020 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@5cc0e51e]
+Nov 02, 2025 3:57:24.877132122 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@18011760
+Nov 02, 2025 3:57:24.877747164 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@18011760]
+Nov 02, 2025 3:57:24.976240787 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@102121c4]
+Nov 02, 2025 3:57:24.977185975 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@102121c4]
+Nov 02, 2025 3:57:24.977688773 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@7289b558
+Nov 02, 2025 3:57:24.978233207 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@7289b558]
+Nov 02, 2025 3:57:25.084446065 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@2618fe84]
+Nov 02, 2025 3:57:25.086674316 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@2618fe84]
+Nov 02, 2025 3:57:25.087696559 PM comp512st.paxos.Paxos acceptTOMsg INFO: Delivering sequence 2: [Ljava.lang.Object;@61eb7f35
+Nov 02, 2025 3:57:25.088332037 PM comp512st.tiapp.TreasureIslandApp run FINE: Received :[1, R]
+Nov 02, 2025 3:57:25.088888204 PM comp512.ti.TreasureIsland move INFO: Move request: player number 1 direction R
+Nov 02, 2025 3:57:25.089576371 PM comp512.ti.TreasureIsland move INFO: Player A got treasure points 8
+Nov 02, 2025 3:57:25.722617486 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@7e16a970]
+Nov 02, 2025 3:57:25.723975988 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@7e16a970]
+Nov 02, 2025 3:57:25.724731236 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@60e2ed42
+Nov 02, 2025 3:57:25.725647587 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@60e2ed42]
+Nov 02, 2025 3:57:25.822604141 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@25a55bb9]
+Nov 02, 2025 3:57:25.823835748 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@25a55bb9]
+Nov 02, 2025 3:57:25.824616104 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@23afee8f
+Nov 02, 2025 3:57:25.825485151 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@23afee8f]
+Nov 02, 2025 3:57:25.928553074 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@3c1371c8]
+Nov 02, 2025 3:57:25.929968414 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@3c1371c8]
+Nov 02, 2025 3:57:25.931029184 PM comp512st.paxos.Paxos acceptTOMsg INFO: Delivering sequence 3: [Ljava.lang.Object;@468a1a07
+Nov 02, 2025 3:57:25.931697502 PM comp512st.tiapp.TreasureIslandApp run FINE: Received :[1, R]
+Nov 02, 2025 3:57:25.932228564 PM comp512.ti.TreasureIsland move INFO: Move request: player number 1 direction R
+Nov 02, 2025 3:57:29.174443629 PM comp512st.tiapp.TreasureIslandApp main FINE: cmd is : D
+Nov 02, 2025 3:57:29.174766584 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@2b05039f
+Nov 02, 2025 3:57:29.174977841 PM comp512st.paxos.Paxos broadcastTOMsg INFO: Forwarded message to leader tr-open-11.cs.mcgill.ca:40103
+Nov 02, 2025 3:57:29.174990727 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@2b05039f]
+Nov 02, 2025 3:57:29.185125310 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@5d9e5410]
+Nov 02, 2025 3:57:29.185489937 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@5d9e5410]
+Nov 02, 2025 3:57:29.185807741 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@3305578d
+Nov 02, 2025 3:57:29.186087030 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@3305578d]
+Nov 02, 2025 3:57:29.287919295 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@16083bfa]
+Nov 02, 2025 3:57:29.288433129 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@16083bfa]
+Nov 02, 2025 3:57:29.289227440 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@c9917c0
+Nov 02, 2025 3:57:29.289540367 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@c9917c0]
+Nov 02, 2025 3:57:29.392355916 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@197fd211]
+Nov 02, 2025 3:57:29.392911431 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@197fd211]
+Nov 02, 2025 3:57:29.393227041 PM comp512st.paxos.Paxos acceptTOMsg INFO: Delivering sequence 4: [Ljava.lang.Object;@5b2ab202
+Nov 02, 2025 3:57:29.393490041 PM comp512st.tiapp.TreasureIslandApp run FINE: Received :[2, D]
+Nov 02, 2025 3:57:29.393703332 PM comp512.ti.TreasureIsland move INFO: Move request: player number 2 direction D
+Nov 02, 2025 3:57:30.901663295 PM comp512st.tiapp.TreasureIslandApp main FINE: cmd is : D
+Nov 02, 2025 3:57:30.902020628 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@61e717c2
+Nov 02, 2025 3:57:30.902190359 PM comp512st.paxos.Paxos broadcastTOMsg INFO: Forwarded message to leader tr-open-11.cs.mcgill.ca:40103
+Nov 02, 2025 3:57:30.902264042 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@61e717c2]
+Nov 02, 2025 3:57:30.910111763 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@3ec57dc7]
+Nov 02, 2025 3:57:30.910538467 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@3ec57dc7]
+Nov 02, 2025 3:57:30.910724040 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@7be663ec
+Nov 02, 2025 3:57:30.910934755 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@7be663ec]
+Nov 02, 2025 3:57:31.012775240 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@11d490db]
+Nov 02, 2025 3:57:31.013158127 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@11d490db]
+Nov 02, 2025 3:57:31.013348762 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@27e13189
+Nov 02, 2025 3:57:31.013562799 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@27e13189]
+Nov 02, 2025 3:57:31.117275397 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@4654aef0]
+Nov 02, 2025 3:57:31.117797178 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@4654aef0]
+Nov 02, 2025 3:57:31.118252079 PM comp512st.paxos.Paxos acceptTOMsg INFO: Delivering sequence 5: [Ljava.lang.Object;@7b610b7d
+Nov 02, 2025 3:57:31.118508342 PM comp512st.tiapp.TreasureIslandApp run FINE: Received :[2, D]
+Nov 02, 2025 3:57:31.118709058 PM comp512.ti.TreasureIsland move INFO: Move request: player number 2 direction D
+Nov 02, 2025 3:57:32.699281261 PM comp512st.tiapp.TreasureIslandApp main FINE: cmd is : R
+Nov 02, 2025 3:57:32.699900816 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@66cd51c3
+Nov 02, 2025 3:57:32.700239224 PM comp512st.paxos.Paxos broadcastTOMsg INFO: Forwarded message to leader tr-open-11.cs.mcgill.ca:40103
+Nov 02, 2025 3:57:32.700358208 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@66cd51c3]
+Nov 02, 2025 3:57:32.709254586 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@215c1371]
+Nov 02, 2025 3:57:32.709873619 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@215c1371]
+Nov 02, 2025 3:57:32.710180847 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@3ec1b3c7
+Nov 02, 2025 3:57:32.710566502 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@3ec1b3c7]
+Nov 02, 2025 3:57:32.811553528 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@346269d8]
+Nov 02, 2025 3:57:32.812257093 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@346269d8]
+Nov 02, 2025 3:57:32.812656544 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@7a2294c8
+Nov 02, 2025 3:57:32.813039481 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@7a2294c8]
+Nov 02, 2025 3:57:32.915329151 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@18565c7]
+Nov 02, 2025 3:57:32.916067572 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@18565c7]
+Nov 02, 2025 3:57:32.916545284 PM comp512st.paxos.Paxos acceptTOMsg INFO: Delivering sequence 6: [Ljava.lang.Object;@5adee335
+Nov 02, 2025 3:57:32.916939054 PM comp512st.tiapp.TreasureIslandApp run FINE: Received :[2, R]
+Nov 02, 2025 3:57:32.917276718 PM comp512.ti.TreasureIsland move INFO: Move request: player number 2 direction R
+Nov 02, 2025 3:57:35.558177083 PM comp512st.tiapp.TreasureIslandApp main FINE: cmd is : L
+Nov 02, 2025 3:57:35.559081295 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@4dcbadb4
+Nov 02, 2025 3:57:35.559625932 PM comp512st.paxos.Paxos broadcastTOMsg INFO: Forwarded message to leader tr-open-11.cs.mcgill.ca:40103
+Nov 02, 2025 3:57:35.559770507 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@4dcbadb4]
+Nov 02, 2025 3:57:35.568508421 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@62456829]
+Nov 02, 2025 3:57:35.569173344 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@62456829]
+Nov 02, 2025 3:57:35.569960464 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@32136163
+Nov 02, 2025 3:57:35.570795919 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@32136163]
+Nov 02, 2025 3:57:35.670377698 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@23c3288b]
+Nov 02, 2025 3:57:35.670832360 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@23c3288b]
+Nov 02, 2025 3:57:35.671103112 PM comp512.gcl.GCL sendMsg FINE: Request received to send message to tr-open-11.cs.mcgill.ca:40103. [Ljava.lang.Object;@1c5063d1
+Nov 02, 2025 3:57:35.671716003 PM comp512.gcl.GCL$GCLOutBoxDespatcher run FINE: tr-open-11.cs.mcgill.ca:40103: Sending message to. message: [senderProcess:tr-open-18.cs.mcgill.ca:40203:val:[Ljava.lang.Object;@1c5063d1]
+Nov 02, 2025 3:57:35.774783632 PM comp512.gcl.GCL$GCLInbox run FINE: tr-open-11.cs.mcgill.ca:40103: Received a message from. message: [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@448b982]
+Nov 02, 2025 3:57:35.776637524 PM comp512.gcl.GCL readGCMessage INFO: Delivering message : [senderProcess:tr-open-11.cs.mcgill.ca:40103:val:[Ljava.lang.Object;@448b982]
+Nov 02, 2025 3:57:35.777717064 PM comp512st.paxos.Paxos acceptTOMsg INFO: Delivering sequence 7: [Ljava.lang.Object;@6f83ac0e
+Nov 02, 2025 3:57:35.778344114 PM comp512st.tiapp.TreasureIslandApp run FINE: Received :[2, L]
+Nov 02, 2025 3:57:35.778925299 PM comp512.ti.TreasureIsland move INFO: Move request: player number 2 direction L

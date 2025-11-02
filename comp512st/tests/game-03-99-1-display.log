@@ -1,0 +1,16 @@
+Exception in thread "main" java.lang.IllegalArgumentException: Error while trying to establish local host. Is myProcess open-11.cs.mcgill.ca:40103 a valid argument?java.net.UnknownHostException: open-11.cs.mcgill.ca: Name or service not known
+	at comp512.gcl.GCL.checkProcessArguments(GCL.java:553)
+	at comp512.gcl.GCL.<init>(GCL.java:595)
+	at comp512st.paxos.Paxos.<init>(Paxos.java:30)
+	at comp512st.tests.TreasureIslandAppAuto.main(TreasureIslandAppAuto.java:226)
+Caused by: java.net.UnknownHostException: open-11.cs.mcgill.ca: Name or service not known
+	at java.base/java.net.Inet6AddressImpl.lookupAllHostAddr(Native Method)
+	at java.base/java.net.Inet6AddressImpl.lookupAllHostAddr(Inet6AddressImpl.java:52)
+	at java.base/java.net.InetAddress$PlatformResolver.lookupByName(InetAddress.java:1211)
+	at java.base/java.net.InetAddress.getAddressesFromNameService(InetAddress.java:1828)
+	at java.base/java.net.InetAddress$NameServiceAddresses.get(InetAddress.java:1139)
+	at java.base/java.net.InetAddress.getAllByName0(InetAddress.java:1818)
+	at java.base/java.net.InetAddress.getAllByName(InetAddress.java:1688)
+	at java.base/java.net.InetAddress.getByName(InetAddress.java:1568)
+	at comp512.gcl.GCL.checkProcessArguments(GCL.java:545)
+	... 3 more
