@@ -29,28 +29,28 @@ public class Paxos
     private final Object broadcastLock = new Object(); // lock for broadcast
     private Object pendingLocalProposal = null; // what client wants to install
 
-    private final String leaderProcess;
+    //private final String leaderProcess;
 	private final String[] allGroupProcesses;
     private final String myProcess;
 
     private static int proposalCounter = 0;
-    private static int nextSequenceNumber = 0; // next value for a new proposal
+    private static int currentSequenceNumber = 0; // slot 
     private int nextDeliverySequence = 0; // next number that can be delivered to the app
 
     public Paxos(String myProcess, String[] allGroupProcesses, Logger logger, FailCheck failCheck) throws IOException, UnknownHostException 
     {
         this.myProcess = myProcess;
-        this.leaderProcess = allGroupProcesses[0];
+        //this.leaderProcess = allGroupProcesses[0];
         this.failCheck = failCheck;
         this.logger = logger;
         this.gcl = new GCL(myProcess, allGroupProcesses, null, logger);
 		this.allGroupProcesses = allGroupProcesses;
 
         startListenerThread();
-        if (myProcess.equals(leaderProcess))
-        {
-            startWorkerThread();
-        }
+        // if (myProcess.equals(leaderProcess))
+        // {
+        startWorkerThread();
+        // }
     }
 
     // =======================================
@@ -63,29 +63,30 @@ public class Paxos
 
         //If process is not leader, send move to leader as client_request 
         //Leader will be only process actually running paxos.
-        if (!myProcess.equals(leaderProcess))
-        {
-            gcl.sendMsg(new Object[]{"CLIENT_REQUEST", valArray}, leaderProcess);
-            logger.info("Forwarded message to leader " + leaderProcess);
 
-            synchronized(broadcastLock)
-            {
-                pendingLocalProposal = val;
-                while (pendingLocalProposal != null && running)
-                {
-                    try 
-                    {
-                        broadcastLock.wait(); // block until consensus is reached
-                    }
-                    catch (InterruptedException e)
-                    {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
-                }
-            }
-            return;
-        }
+        // if (!myProcess.equals(leaderProcess))
+        // {
+        //     gcl.sendMsg(new Object[]{"CLIENT_REQUEST", valArray}, leaderProcess);
+        //     logger.info("Forwarded message to leader " + leaderProcess);
+
+        //     synchronized(broadcastLock)
+        //     {
+        //         pendingLocalProposal = val;
+        //         while (pendingLocalProposal != null && running)
+        //         {
+        //             try 
+        //             {
+        //                 broadcastLock.wait(); // block until consensus is reached
+        //             }
+        //             catch (InterruptedException e)
+        //             {
+        //                 Thread.currentThread().interrupt();
+        //                 return;
+        //             }
+        //         }
+        //     }
+        //     return;
+        // }
 
         synchronized (broadcastLock)
         {
@@ -94,7 +95,6 @@ public class Paxos
             try 
             {
                 clientRequestQueue.put(valArray);
-                logger.info("Leader queued local request for worker thread.");
             }
             catch (InterruptedException e)
             {
@@ -225,14 +225,14 @@ public class Paxos
             Object[] data = (Object[]) msg.val;
             String messageType = (String) data[0];
 
-            if (messageType.equals("CLIENT_REQUEST") && myProcess.equals(leaderProcess))
-            {
-                Object val = (Object[]) data[1];
-                Object[] formattedData = formatValue(val); // [player, val]
-                clientRequestQueue.put(formattedData);
-                logger.info("Listener added to queue client request from: " + msg.senderProcess);
-                return;
-            }
+            // if (messageType.equals("CLIENT_REQUEST") && myProcess.equals(leaderProcess))
+            // {
+                // Object val = (Object[]) data[1];
+                // Object[] formattedData = formatValue(val); // [player, val]
+                // clientRequestQueue.put(formattedData);
+                // logger.info("Listener added to queue client request from: " + msg.senderProcess);
+            //     return;
+            // }
             switch (messageType) 
             {
                 case "PREPARE":
@@ -267,7 +267,7 @@ public class Paxos
     {
         Object val = value;
         boolean consensus = false;
-        int sequenceNum = getNextSequenceNumber();
+        int sequenceNum = getCurrentSequenceNumber();
         int playerNum = (int) value[0];
 
         while (!consensus && running) 
@@ -435,7 +435,10 @@ public class Paxos
         consensusValues.put(seqNum, val);
         synchronized (consensusValues) //synchronize keyword to enforce one thread to access this block at a time 
         { 
-            //consensusValues.wait();  puts thread to sleep until notified
+            if (seqNum == currentSequenceNumber)
+            {
+                currentSequenceNumber = seqNum + 1; // upon decision, update the next available slot 
+            }
             consensusValues.notifyAll(); // wake acceptTOMsg() - this is the notification that the consensusValues has been updated
         }
         synchronized(broadcastLock)
@@ -485,9 +488,9 @@ public class Paxos
         return (proposalCounter++ * 100000) + processHash; // * 100000 allows first 4 digits of result to represent proposalCounter and last 4 digits to represent hashCode
     }
 
-    private synchronized int getNextSequenceNumber() 
+    private synchronized int getCurrentSequenceNumber() 
     {
-        return nextSequenceNumber++;
+        return currentSequenceNumber;
     }
 
     private boolean valuesDeepMatch(Object val1, Object val2) { // compare values instead of object identity
