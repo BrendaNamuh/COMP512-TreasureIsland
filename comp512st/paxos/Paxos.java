@@ -30,14 +30,13 @@ public class Paxos
     private volatile boolean running = true; // is false if PaxosShutdown, otherwise remains true
     private Thread listenerThread; // constantly listens to messages from network
     private Thread workerThread;  // runs paxos
-    private BlockingQueue<Object[]> clientRequestQueue = new LinkedBlockingQueue<>(); // requests waiting to be proposed
+    private final BlockingQueue<Object[]> clientRequestQueue = new LinkedBlockingQueue<>(); // requests waiting to be proposed
     private final Object broadcastLock = new Object(); // lock for broadcast
     private Object pendingLocalProposal = null; // what client wants to install
 
 	private final String[] allGroupProcesses;
     private final String myProcess;
 
-    private int localProposalCounter = 0;
     private static int currentSequenceNumber = 0; // slot 
     private int nextDeliverySequence = 0; // next number that can be delivered to the app
 
@@ -113,15 +112,45 @@ public class Paxos
     public void shutdownPaxos() 
     {
         running = false;
-        gcl.shutdownGCL();
-        if (listenerThread != null && listenerThread.isAlive()) 
+        //gcl.shutdownGCL();
+        if (workerThread != null && workerThread.isAlive()) // let it finish the paxos instance and then stop it
         {
-            listenerThread.interrupt();
+            workerThread.interrupt();
+            try 
+            {
+                logger.fine("Waiting on worker thread to finish before shut down.");
+                workerThread.join(2000); // give it 2 secs
+            }
+            catch (InterruptedException e)
+            {
+                Thread.currentThread().interrupt();
+            }
         }
-        synchronized (consensusValues) 
+        if (listenerThread != null && listenerThread.isAlive()) /// shutdown listener thread before gcl
+        {
+            try
+            {
+                logger.fine("Waiting for listener thread to finish before shut down");
+                listenerThread.join(2000); // give it 2 seconds
+            }
+            catch (InterruptedException e)
+            {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        gcl.shutdownGCL();
+
+        synchronized (consensusValues) // unblock acceptTOMsg
         {
             consensusValues.notifyAll();
         }
+
+        synchronized (broadcastLock)
+        {
+            broadcastLock.notifyAll(); // unblock broadcastTOMsg
+        }
+
         logger.info("Paxos shutdown complete.");
     }
 
@@ -231,7 +260,6 @@ public class Paxos
         boolean consensus = false;
         int sequenceNum = getCurrentSequenceNumber();
         int playerNum = (int) value[0];
-        int retryCount = 0;
 
         while (!consensus && running) 
         {
@@ -242,24 +270,11 @@ public class Paxos
             highestAcceptedBallot.remove(sequenceNum); 
             highestAcceptedValue.remove(sequenceNum);
             
-            // Phase 1: Prepare
+            // Phase 1: Propose
             boolean majorityPromised = phase1Propose(proposalNum, sequenceNum);
             if (!majorityPromised) 
             {
                 logger.warning("Player " + playerNum +" - Prepare phase failed, retrying...");
-
-                long backoffTimeMs = (long) (Math.pow(2, retryCount) * (new Random().nextInt(100) + 50)); // compute increasing delay 
-                if (backoffTimeMs > 3000) backoffTimeMs = 3000; 
-                retryCount++;
-                try 
-                {
-                    Thread.sleep(backoffTimeMs);  // delay before next retry is allowed
-                }
-                catch (InterruptedException e)
-                {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
                 continue;
             }
 
@@ -307,7 +322,21 @@ public class Paxos
         highestAcceptedBallot.remove(seqNum); // clean
         highestAcceptedValue.remove(seqNum);
 
-        gcl.broadcastMsg(new Object[]{"PROPOSE", proposalNum, seqNum});
+        try
+        {
+            gcl.broadcastMsg(new Object[]{"PROPOSE", proposalNum, seqNum});
+        }
+        catch (IllegalStateException e) // when gcl is shutting down
+        {
+            if (!running)
+            {
+                logger.fine("Aborting because of gcl shutdown");
+                return false;
+            }
+            logger.severe("GCL error during propose: " + e.getMessage());
+            return false;
+        }
+
         return waitForMajority(promiseCount, seqNum);
     }
 
@@ -503,22 +532,6 @@ public class Paxos
         return currentSequenceNumber;
     }
 
-    private boolean valuesDeepMatch(Object val1, Object val2) { // compare values instead of object identity
-        if (val1 == val2) 
-        {
-            return true;
-        }
-        if (val1 == null || val2 == null) 
-        {
-            return false;
-        }
-        if (val1.getClass().isArray() && val2.getClass().isArray()) 
-        {
-            return Arrays.deepEquals((Object[]) val1, (Object[]) val2);
-        }
-        return val1.equals(val2);
-    }
-
     private Object[] formatValue(Object value)
     {
         if (value instanceof Object[] && ((Object[]) value).length == 2)
@@ -549,7 +562,6 @@ public class Paxos
         }
 
         return new Object[]{null, value};
-
     }
 }
 
