@@ -19,8 +19,13 @@ public class Paxos
     private final Map<Integer, Object> consensusValues = new ConcurrentHashMap<>(); // sequence number, decided value - yet to be delivered buffer
     private final Map<Integer, Integer> promiseCount = new ConcurrentHashMap<>(); // sequence number, number of promise messages received
     private final Map<Integer, Integer> acceptCount = new ConcurrentHashMap<>(); // seqeuenc number, number of accept messages received
-    private Map<Integer, Long> promisedProposalNumbers = new ConcurrentHashMap<>(); // sequence number, highest proposal number that was accepted of this sequence number
+    private final Map<Integer, Long> promisedBallotID = new ConcurrentHashMap<>(); // sequence number, highest proposal number that was promised by this process for this sequence number
 
+    private final Map<Integer, Long> acceptedBallotID = new ConcurrentHashMap<>(); // seq number, ballotID of the latest proposal this process accepted
+    private final Map<Integer, Object> acceptedValues = new ConcurrentHashMap<>(); // sequence numnber, value accepted by this process for that seq num
+
+    private final Map<Integer, Long> highestAcceptedBallot = new ConcurrentHashMap<>(); // sequence number, highest accepted ballot sent in promise messages
+    private final Map<Integer, Object> highestAcceptedValue = new ConcurrentHashMap<>(); // sequence number, value associated to highest accepted ballot in promise message
 
     private volatile boolean running = true; // is false if PaxosShutdown, otherwise remains true
     private Thread listenerThread; // constantly listens to messages from network
@@ -29,28 +34,23 @@ public class Paxos
     private final Object broadcastLock = new Object(); // lock for broadcast
     private Object pendingLocalProposal = null; // what client wants to install
 
-    //private final String leaderProcess;
 	private final String[] allGroupProcesses;
     private final String myProcess;
 
-    private static int proposalCounter = 0;
+    private int localProposalCounter = 0;
     private static int currentSequenceNumber = 0; // slot 
     private int nextDeliverySequence = 0; // next number that can be delivered to the app
 
     public Paxos(String myProcess, String[] allGroupProcesses, Logger logger, FailCheck failCheck) throws IOException, UnknownHostException 
     {
         this.myProcess = myProcess;
-        //this.leaderProcess = allGroupProcesses[0];
         this.failCheck = failCheck;
         this.logger = logger;
         this.gcl = new GCL(myProcess, allGroupProcesses, null, logger);
 		this.allGroupProcesses = allGroupProcesses;
 
         startListenerThread();
-        // if (myProcess.equals(leaderProcess))
-        // {
         startWorkerThread();
-        // }
     }
 
     // =======================================
@@ -60,33 +60,6 @@ public class Paxos
     public void broadcastTOMsg(Object val) 
     {
         Object[] valArray = formatValue(val); // will be integer, char
-
-        //If process is not leader, send move to leader as client_request 
-        //Leader will be only process actually running paxos.
-
-        // if (!myProcess.equals(leaderProcess))
-        // {
-        //     gcl.sendMsg(new Object[]{"CLIENT_REQUEST", valArray}, leaderProcess);
-        //     logger.info("Forwarded message to leader " + leaderProcess);
-
-        //     synchronized(broadcastLock)
-        //     {
-        //         pendingLocalProposal = val;
-        //         while (pendingLocalProposal != null && running)
-        //         {
-        //             try 
-        //             {
-        //                 broadcastLock.wait(); // block until consensus is reached
-        //             }
-        //             catch (InterruptedException e)
-        //             {
-        //                 Thread.currentThread().interrupt();
-        //                 return;
-        //             }
-        //         }
-        //     }
-        //     return;
-        // }
 
         synchronized (broadcastLock)
         {
@@ -225,18 +198,10 @@ public class Paxos
             Object[] data = (Object[]) msg.val;
             String messageType = (String) data[0];
 
-            // if (messageType.equals("CLIENT_REQUEST") && myProcess.equals(leaderProcess))
-            // {
-                // Object val = (Object[]) data[1];
-                // Object[] formattedData = formatValue(val); // [player, val]
-                // clientRequestQueue.put(formattedData);
-                // logger.info("Listener added to queue client request from: " + msg.senderProcess);
-            //     return;
-            // }
             switch (messageType) 
             {
-                case "PREPARE":
-                    handlePrepare(msg.senderProcess, data);
+                case "PROPOSE":
+                    handlePropose(msg.senderProcess, data);
                     break;
                 case "PROMISE":
                     handlePromise(msg.senderProcess, data);
@@ -250,9 +215,6 @@ public class Paxos
                 case "DECIDE":
                     handleDecide(msg.senderProcess, data);
                     break; 
-                //case "CLIENT_REQUEST":
-                    //handleClientRequest(msg.senderProcess, data); // send message to the leader to start paxos for this value
-                    //break;
                 default:
                     logger.warning("Unknown message type: " + messageType);
             }
@@ -269,19 +231,53 @@ public class Paxos
         boolean consensus = false;
         int sequenceNum = getCurrentSequenceNumber();
         int playerNum = (int) value[0];
+        int retryCount = 0;
 
         while (!consensus && running) 
         {
-            long proposalNum = generateProposalNumber();
+            long proposalNum = generateBallotID();
             logger.info("Player "+playerNum+" - Starting Paxos for seq=" + sequenceNum + ", proposal=" + proposalNum);
 
+            promiseCount.remove(sequenceNum); // clear
+            highestAcceptedBallot.remove(sequenceNum); 
+            highestAcceptedValue.remove(sequenceNum);
+            
             // Phase 1: Prepare
-            boolean majorityPromised = phase1Prepare(proposalNum, sequenceNum, val);
+            boolean majorityPromised = phase1Propose(proposalNum, sequenceNum);
             if (!majorityPromised) 
             {
                 logger.warning("Player " + playerNum +" - Prepare phase failed, retrying...");
+
+                long backoffTimeMs = (long) (Math.pow(2, retryCount) * (new Random().nextInt(100) + 50)); // compute increasing delay 
+                if (backoffTimeMs > 3000) backoffTimeMs = 3000; 
+                retryCount++;
+                try 
+                {
+                    Thread.sleep(backoffTimeMs);  // delay before next retry is allowed
+                }
+                catch (InterruptedException e)
+                {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
                 continue;
             }
+
+            Long acceptedNum = highestAcceptedBallot.get(sequenceNum);
+            Object acceptedVal = highestAcceptedValue.get(sequenceNum);
+
+            if (acceptedVal != null) // if there is a previously accepted val, proposer must propose that one
+            { 
+                logger.info("Player "+ playerNum +" - Proposing previously accepted value (" + acceptedVal + ") from ballotID " + acceptedNum);
+                val = acceptedVal; 
+            } 
+            else 
+            {
+                logger.info("Player "+ playerNum +" - Proposing client's value: " + ((Object[])value)[1]);
+            }
+            
+            highestAcceptedBallot.remove(sequenceNum); // clear
+            highestAcceptedValue.remove(sequenceNum);
 
             failCheck.checkFailure(FailCheck.FailureType.AFTERBECOMINGLEADER);
 
@@ -301,41 +297,40 @@ public class Paxos
         }
     }
 
-    // private void handleClientRequest(String sender, Object[] data) 
-    // {
-    //     Object val = data[1]; 
-    //     logger.info("Leader received client request from " + sender + ": " + val);
-    //     broadcastTOMsg(val); // run Paxos for this value
-    // }
-
     // =======================================
-    // PHASE 1: PREPARE / PROMISE
+    // PHASE 1: PROPOSE / PROMISE
     // =======================================
 
-    private boolean phase1Prepare(long proposalNum, int seqNum, Object val) 
+    private boolean phase1Propose(long proposalNum, int seqNum) 
     {
         promiseCount.put(seqNum, 0); // add sequence number, promise count to the concurrent map
-        gcl.broadcastMsg(new Object[]{"PREPARE", proposalNum, seqNum, val});
+        highestAcceptedBallot.remove(seqNum); // clean
+        highestAcceptedValue.remove(seqNum);
+
+        gcl.broadcastMsg(new Object[]{"PROPOSE", proposalNum, seqNum});
         return waitForMajority(promiseCount, seqNum);
     }
 
-    private void handlePrepare(String sender, Object[] data) 
+    private void handlePropose(String sender, Object[] data) 
     {
         long proposalNum = (long) data[1];
         int seqNum = (int) data[2];
-        Object val = data[3];
+        //Object val = data[3];
 
         // Get the latest promised value 
-        Long promised = promisedProposalNumbers.get(seqNum);
-        //The only case  proposalNum==promised is if promisedProposalNumbers failed to update and it's trying again
-        // Otherwise no players should have the same promisedProposalNumbers within a sequence
+        Long promised = promisedBallotID.get(seqNum);
+        //The only case  proposalNum==promised is if promisedBallotID failed to update and it's trying again
+        // Otherwise no players should have the same promisedBallotID within a sequence
         if (promised == null || proposalNum >= promised) 
         {     
             // Update the promised proposal number
-            promisedProposalNumbers.put(seqNum, proposalNum);
+            promisedBallotID.put(seqNum, proposalNum);
+
+            Long acceptedNum = acceptedBallotID.get(seqNum);
+            Object acceptedValue = acceptedValues.get(seqNum);
 
             // Send PROMISE back to the proposer
-            gcl.sendMsg(new Object[]{"PROMISE", proposalNum, seqNum, val}, sender);
+            gcl.sendMsg(new Object[]{"PROMISE", proposalNum, seqNum, acceptedNum, acceptedValue}, sender);
         } 
         else 
         {
@@ -348,6 +343,9 @@ public class Paxos
     private void handlePromise(String sender, Object[] data) 
     {
         int seqNum = (int) data[2];
+        Long acceptedBallotID = (Long) data[3]; // accepted ballot
+        Object acceptedValue = data[4]; // accepted value
+
         // Increment promise for this sequence
         if (promiseCount.containsKey(seqNum)) 
         {
@@ -357,6 +355,14 @@ public class Paxos
         else 
         {
             promiseCount.put(seqNum, 1);
+        }
+
+        Long currentHighestAccepted = highestAcceptedBallot.getOrDefault(seqNum, -1L);
+
+        if (acceptedBallotID != null && (acceptedBallotID > currentHighestAccepted)) // if this ballot ID is greater than the current highest
+        {
+            highestAcceptedBallot.put(seqNum, acceptedBallotID);
+            highestAcceptedValue.put(seqNum, acceptedValue);
         }
     }
 
@@ -378,10 +384,13 @@ public class Paxos
         Object val = data[3];
         
         // Get the latest promised value 
-        Long promised = promisedProposalNumbers.get(seqNum);
+        Long promised = promisedBallotID.get(seqNum);
     
         if (promised == null || proposalNum >= promised) // send back accepted message if value is higher than latest accepted proposal
         {
+            promisedBallotID.put(seqNum, proposalNum);
+            acceptedBallotID.put(seqNum, proposalNum); // add the accepted ballotID
+            acceptedValues.put(seqNum, val);
             gcl.sendMsg(new Object[]{"ACCEPTED", proposalNum, seqNum, val}, sender); 
         } 
         else 
@@ -421,11 +430,8 @@ public class Paxos
 
         synchronized (broadcastLock)
         {
-            // if (pendingLocalProposal != null && valuesDeepMatch(pendingLocalProposal, val)) // if the proposal was confirmed, clear the pending localPropoal
-            // {
-                pendingLocalProposal = null;
-                broadcastLock.notifyAll();
-            //}
+            pendingLocalProposal = null;
+            broadcastLock.notifyAll();
         }
     }
 
@@ -443,11 +449,11 @@ public class Paxos
         }
         synchronized(broadcastLock)
         {
-            if (pendingLocalProposal != null && valuesDeepMatch(val, pendingLocalProposal))
-            {
+            // if (pendingLocalProposal != null && valuesDeepMatch(val, pendingLocalProposal))
+            // {
                 pendingLocalProposal = null;
                 broadcastLock.notifyAll();
-            }
+            // }
         }
         if (isBroadcastingConsensus)
         {
@@ -482,10 +488,14 @@ public class Paxos
         return false;
     }
 
-    private synchronized long generateProposalNumber() 
+    private synchronized long generateBallotID() 
     {
-        long processHash = Math.abs(myProcess.hashCode() % 10000); // % 10000 limits value to 4 digits
-        return (proposalCounter++ * 100000) + processHash; // * 100000 allows first 4 digits of result to represent proposalCounter and last 4 digits to represent hashCode
+        //long processHash = Math.abs(myProcess.hashCode() % 10000); // % 10000 limits value to 4 digits
+        //return (proposalCounter++ * 100000) + processHash; // * 100000 allows first 4 digits of result to represent proposalCounter and last 4 digits to represent hashCode
+
+        long timestamp = System.currentTimeMillis(); 
+        long processHash = Math.abs(myProcess.hashCode() % 10000); // tie break is process hash
+        return (timestamp * 10000) + processHash;
     }
 
     private synchronized int getCurrentSequenceNumber() 
