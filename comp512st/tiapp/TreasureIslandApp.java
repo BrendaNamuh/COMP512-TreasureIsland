@@ -47,6 +47,7 @@ public class TreasureIslandApp implements Runnable
 			{
 				if(keepExploring)
 					logger.log(Level.SEVERE, "Encountered InterruptedException while waiting for messages.", ie);
+				Thread.currentThread().interrupt();
 				break;
 			}
 		}
@@ -130,11 +131,8 @@ public class TreasureIslandApp implements Runnable
 			switch(cmd)
 			{
 				case "L":
-				// why not call broadcastTOMsg here
 				case "R":
-				// why not call broadcastTOMsg here
 				case "U":
-				// why not call broadcastTOMsg here
 				case "D": // Capture the move and broadcast it to everyone along with the player number.
 					// Remember, this should block till this move has been accepted by the majority.
 					//	The logic for that should be built into the paxos module.
@@ -165,7 +163,24 @@ public class TreasureIslandApp implements Runnable
 
 		logger.info("Shutting down Paxos");
 		ta.keepExploring = false;
-		ta.tiThread.join(1000); // Wait maximum 1s for the app to process any more incomming messages that was in the queue.
+		ta.tiThread.interrupt();
+		ta.tiThread.join(3000); // Wait maximum 1s for the app to process any more incomming messages that was in the queue. INCREASED TO 2000
+	    try 
+		{
+            Object[] msg;
+            logger.info("[SHUTDOWN] [DRAIN] Starting graceful drain to deliver missed messages.");
+            while ((msg = (Object[]) paxos.acceptTOMsg()) != null) 
+			{
+                logger.info("[SHUTDOWN] [DRAIN] Delivering sequence missed by app thread: " + Arrays.toString(msg));
+                ta.move((Integer)msg[0], (Character)msg[1], false); // Deliver the move
+				ta.displayIsland();
+            }
+        } 
+		catch (InterruptedException ie) 
+		{
+             logger.warning("Main thread interrupted during graceful drain, continuing shutdown.");
+             Thread.currentThread().interrupt();
+        }
 		paxos.shutdownPaxos(); // shutdown paxos.
 		ta.tiThread.interrupt(); // interrupt the app thread if it has not terminated.
 		ta.displayIsland(); // display the final map

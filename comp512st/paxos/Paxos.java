@@ -15,7 +15,6 @@ public class Paxos
     private final FailCheck failCheck;
     private final Logger logger;
 
-    // Paxos state
     private final Map<Integer, Object> consensusValues = new ConcurrentHashMap<>(); // sequence number, decided value - yet to be delivered buffer
     private final Map<Integer, Integer> promiseCount = new ConcurrentHashMap<>(); // sequence number, number of promise messages received
     private final Map<Integer, Integer> acceptCount = new ConcurrentHashMap<>(); // seqeuenc number, number of accept messages received
@@ -37,11 +36,11 @@ public class Paxos
 	private final String[] allGroupProcesses;
     private final String myProcess;
 
-    private static int currentSequenceNumber = 0; // slot 
+    private static int currentSequenceNumber = 0; // next available slot
     private int nextDeliverySequence = 0; // next number that can be delivered to the app
 
-    // private final Object proposalLock = new Object(); // to ensure that the worker thread is not shut down while a proposal is in progress
-    // private volatile boolean proposalRunning = false;
+    private boolean shuttingDown = false;
+
 
     public Paxos(String myProcess, String[] allGroupProcesses, Logger logger, FailCheck failCheck) throws IOException, UnknownHostException 
     {
@@ -66,11 +65,6 @@ public class Paxos
         synchronized (broadcastLock)
         {
             pendingLocalProposal = val;
-
-            // synchronized (proposalLock)
-            // {
-            //     proposalRunning = true;
-            // }
 
             try 
             {
@@ -100,44 +94,89 @@ public class Paxos
     //Delivering messages to application. Loops until there a new consensusVal is returned
     public Object acceptTOMsg() throws InterruptedException 
     {
-        while (running) 
+        while (true) 
         {
             synchronized (consensusValues) 
             {
-                if (consensusValues.containsKey(nextDeliverySequence)) { // if the decided values map has the decided value for the next sequence number to deliver
-                    Object value = consensusValues.get(nextDeliverySequence);
-                    consensusValues.remove(nextDeliverySequence); // Free up memory since no longer need it
+                // waiting to deliver in order
+                if (consensusValues.containsKey(nextDeliverySequence)) // deliver next message
+                { 
+                    Object value = consensusValues.remove(nextDeliverySequence);
+                    if (shuttingDown)
+                    {
+                        logger.warning("[DELIVERY WHILE SHUTDOWN] Delivering message for sequence: " + nextDeliverySequence);
+                    }
                     logger.info("Delivering sequence " + nextDeliverySequence + ": " + value);
                     nextDeliverySequence++;
                     return value;
                 }
+                
+                if (!running && consensusValues.isEmpty())  // shutdown and now more messages to deliver
+                {
+                    logger.log(Level.WARNING, "[NO MORE DELIVERY] acceptTOMsg stops delivering due to shutdown and drained consensus values. Last delivered sequence was : {0}", nextDeliverySequence - 1);
+                    throw new InterruptedException("Paxos shutting down");
+                }
+                
                 consensusValues.wait(); // block until notified
             }
         }
-        throw new InterruptedException("Paxos shutting down");
     }
 
     public void shutdownPaxos() 
     {
-        running = false;
+        shuttingDown = true;
+
+        logger.info("[DEBUG] [SHUTDOWN] process has " + consensusValues.size() + "slots filled when shutdown is called.");
+        logger.warning(debug("[SHUTDOWN] start; running=" + running+ " pendingLocalProposal=" + (pendingLocalProposal != null) + " queueSize=" + clientRequestQueue.size() + " consensusCount=" + consensusValues.size()));
+        
+        running = false; // stop new paxos rounds, stops the worker thread
+
+        synchronized (consensusValues) 
+        {
+            consensusValues.notifyAll(); // unblock
+        }
        
         synchronized (broadcastLock) 
         {
-            while (!clientRequestQueue.isEmpty() || pendingLocalProposal != null) 
+            while (pendingLocalProposal != null) // finish pending proposals
             {
-                Object[] value = clientRequestQueue.poll();
-                if (value != null) runPaxos(value); // process remaining requests
+                try 
+                {
+                    broadcastLock.wait(200);
+                } 
+                catch (InterruptedException e) 
+                {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
+
             broadcastLock.notifyAll();
         }
+
+        // wait and hope that all the incoming decided messages have time to be received
+        //  DEBUG
+        logger.warning(debug("[SHUTDOWN] starting grace wait; consensusCount=" + consensusValues.size()));
+        try 
+        {
+            Thread.sleep(5000); // short grace period for any final DECIDE messages
+        } 
+        catch (InterruptedException e) 
+        {
+            Thread.currentThread().interrupt();
+        }
+        // DEBUG
+        logger.warning(debug("[SHUTDOWN] grace wait over; consensusCount=" + consensusValues.size()));
 
         // let threads finish working
         if (listenerThread != null && listenerThread.isAlive()) 
         {
+            logger.fine("Waiting for listener thread to finish before shutdown");
+            listenerThread.interrupt();        
             try 
             {
-                logger.fine("Waiting for listener thread to finish before shutdown");
-                listenerThread.join(2000); // wait up to 2 seconds
+                logger.fine("Waiting for listener thread to finish.");
+                listenerThread.join(2000); // Wait up to 2 seconds for it to die gracefully
             } 
             catch (InterruptedException e) 
             {
@@ -145,13 +184,10 @@ public class Paxos
             }
         }
 
-        synchronized (consensusValues) 
-        {
-            consensusValues.notifyAll(); // unblock
-        }
-
         if (workerThread != null && workerThread.isAlive()) 
         {
+            workerThread.interrupt();
+
             try 
             {
                 logger.fine("Waiting for worker thread to finish processing queued requests");
@@ -162,15 +198,16 @@ public class Paxos
                 Thread.currentThread().interrupt();
             }
         }
-        // All local values have been decided on !
         
-        // Now we wait for all other processes to reach consensus on their values
-        gcl.barrier("PAXOS_FINAL_BARRIER", allGroupProcesses.length, 5000); // blocks here until all processes reach this same barrier
+        synchronized (consensusValues) 
+        {
+            consensusValues.notifyAll(); // unblock
+        }
         
         //Ready to shutdown process
         gcl.shutdownGCL();
 
-        logger.info("Paxos shutdown complete."); 
+        logger.info("Paxos shutdown complete. Consensus values: " + consensusValues); 
     }
 
     // =======================================
@@ -213,7 +250,7 @@ public class Paxos
         workerThread = new Thread(()->
         {
             logger.info("Paxos Worker thread started. Ready to propose.");
-            while (running || !clientRequestQueue.isEmpty())
+            while (running) // || !clientRequestQueue.isEmpty())
             {
                 try
                 {
@@ -282,15 +319,13 @@ public class Paxos
     {
         Object val = value;
         boolean consensus = false;
-        int sequenceNum = getCurrentSequenceNumber();
+        int sequenceNum = currentSequenceNumber;
         int playerNum = (int) value[0];
 
-        // synchronized (proposalLock)
-        // {
-        //     proposalRunning = true;
-        // }
+        // DEBUG
+        logger.info(debug("[PAXOS] start seq=" + sequenceNum + " running=" + running));
 
-        while (!consensus && running) 
+        while (!consensus && (running || shuttingDown)) 
         {
             long proposalNum = generateBallotID();
             logger.info("Player "+playerNum+" - Starting Paxos for seq=" + sequenceNum + ", proposal=" + proposalNum);
@@ -301,16 +336,20 @@ public class Paxos
             
             // Phase 1: Propose
             boolean majorityPromised = phase1Propose(proposalNum, sequenceNum);
-            if (!running)
+
+            if (!running) // shutdown
             {
-                logger.info("Paxos stopped due to appp shutdown.");
+                logger.warning("[DEBUG] [PAXOS] Shutdown. Just finished paxos instance for seq=" + sequenceNum + " and then.");
                 return;
             }
+
             if (!majorityPromised) 
             {
                 logger.warning("Player " + playerNum +" - Prepare phase failed, retrying...");
                 continue;
             }
+
+            failCheck.checkFailure(FailCheck.FailureType.AFTERBECOMINGLEADER);
 
             Long acceptedNum = highestAcceptedBallot.get(sequenceNum);
             Object acceptedVal = highestAcceptedValue.get(sequenceNum);
@@ -328,8 +367,6 @@ public class Paxos
             highestAcceptedBallot.remove(sequenceNum); // clear
             highestAcceptedValue.remove(sequenceNum);
 
-            failCheck.checkFailure(FailCheck.FailureType.AFTERBECOMINGLEADER);
-
             // Phase 2: Accept
             boolean majorityAccepted = phase2Propose(proposalNum, sequenceNum, val);
             if (!majorityAccepted) 
@@ -344,11 +381,9 @@ public class Paxos
             markAsConsensus(sequenceNum, val,true);
             consensus = true;
         }
+        // DEBUG
+        logger.info(debug("[PAXOS] end seq=" + sequenceNum + " consensus=" + consensus + " running=" + running));
 
-        // synchronized (proposalLock)
-        // {
-        //     proposalRunning = false;
-        // }
     }
 
     // =======================================
@@ -364,6 +399,7 @@ public class Paxos
         try
         {
             gcl.broadcastMsg(new Object[]{"PROPOSE", proposalNum, seqNum});
+            failCheck.checkFailure(FailCheck.FailureType.AFTERSENDPROPOSE);
         }
         catch (IllegalStateException e) // when gcl is shutting down
         {
@@ -395,6 +431,8 @@ public class Paxos
 
     private void handlePropose(String sender, Object[] data) 
     {
+        failCheck.checkFailure(FailCheck.FailureType.RECEIVEPROPOSE);
+        
         long proposalNum = (long) data[1];
         int seqNum = (int) data[2];
         //Object val = data[3];
@@ -415,13 +453,13 @@ public class Paxos
             if (running)
             {
                 gcl.sendMsg(new Object[]{"PROMISE", proposalNum, seqNum, acceptedNum, acceptedValue}, sender);
+                failCheck.checkFailure(FailCheck.FailureType.AFTERSENDVOTE);
             }
         } 
         else 
         {
             // Ignore the prepare message because proposalNum is too small
-            logger.fine("Ignored prepare from " + sender + " for seq " + seqNum + " with proposal " + proposalNum +
-                        " (already promised " + promised + ")");
+            logger.fine("Ignored prepare from " + sender + " for seq " + seqNum + " with proposal " + proposalNum + " (already promised " + promised + ")");
         }
     }
 
@@ -521,6 +559,8 @@ public class Paxos
     {
         int seqNum = (int) data[2];
         Object val = data[3];
+        // DEBUG
+        logger.info(debug("[INCOMING] DECIDE received for seq=" + seqNum + " val=" + Arrays.toString(data)));
         markAsConsensus(seqNum, val,false);
 
         synchronized (broadcastLock)
@@ -534,6 +574,7 @@ public class Paxos
     {
         // Record decided value locally
         consensusValues.put(seqNum, val);
+
         synchronized (consensusValues) //synchronize keyword to enforce one thread to access this block at a time 
         { 
             if (seqNum == currentSequenceNumber)
@@ -544,15 +585,28 @@ public class Paxos
         }
         synchronized(broadcastLock)
         {
-            // if (pendingLocalProposal != null && valuesDeepMatch(val, pendingLocalProposal))
-            // {
-                pendingLocalProposal = null;
-                broadcastLock.notifyAll();
-            // }
+            pendingLocalProposal = null;
+            broadcastLock.notifyAll();
         }
-        if (isBroadcastingConsensus && running)
+        if (isBroadcastingConsensus) // && running)
         {
-            gcl.broadcastMsg(new Object[]{"DECIDE",null, seqNum, val}); // 0 is just
+            try 
+            {
+                //DEBUG
+                logger.fine("[DECIDE] Broadcasting DECIDE for seq=" + seqNum);
+                gcl.broadcastMsg(new Object[]{"DECIDE",null, seqNum, val});
+                logger.info(debug("[DECIDE] broadcast done seq=" + seqNum));
+            }
+            catch (Exception e)
+            {
+                logger.warning("Failed to broadcast decide message during shutdown" + e);
+            }
+        }
+
+        if (shuttingDown)
+        {
+            logger.warning("[CONSENSUS WHILE SHUTDOWN] received consensus for slot number " + seqNum);
+            logger.warning("[CONSENSUS WHILE SHUTDOWN] next slot number for delivery " + nextDeliverySequence);
         }
         
     }
@@ -593,11 +647,6 @@ public class Paxos
         return (timestamp * 10000) + processHash;
     }
 
-    private synchronized int getCurrentSequenceNumber() 
-    {
-        return currentSequenceNumber;
-    }
-
     private Object[] formatValue(Object value)
     {
         if (value instanceof Object[] && ((Object[]) value).length == 2)
@@ -628,6 +677,11 @@ public class Paxos
         }
 
         return new Object[]{null, value};
+    }
+
+    private String debug(String msg) 
+    {
+        return "[DEBUG] [proc=" + myProcess + " thread=" + Thread.currentThread().getName() + "] " + msg;
     }
     
 }
