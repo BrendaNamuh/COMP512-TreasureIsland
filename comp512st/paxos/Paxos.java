@@ -123,7 +123,7 @@ public class Paxos
        
         synchronized (broadcastLock) 
         {
-            while (!clientRequestQueue.isEmpty()) 
+            while (!clientRequestQueue.isEmpty() || pendingLocalProposal != null) 
             {
                 Object[] value = clientRequestQueue.poll();
                 if (value != null) runPaxos(value); // process remaining requests
@@ -162,7 +162,12 @@ public class Paxos
                 Thread.currentThread().interrupt();
             }
         }
-
+        // All local values have been decided on !
+        
+        // Now we wait for all other processes to reach consensus on their values
+        gcl.barrier("PAXOS_FINAL_BARRIER", allGroupProcesses.length, 5000); // blocks here until all processes reach this same barrier
+        
+        //Ready to shutdown process
         gcl.shutdownGCL();
 
         logger.info("Paxos shutdown complete."); 
@@ -624,5 +629,6 @@ public class Paxos
 
         return new Object[]{null, value};
     }
+    
 }
 
