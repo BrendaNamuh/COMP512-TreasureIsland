@@ -639,12 +639,18 @@ public class Paxos
 
     private synchronized long generateBallotID() 
     {
-        //long processHash = Math.abs(myProcess.hashCode() % 10000); // % 10000 limits value to 4 digits
-        //return (proposalCounter++ * 100000) + processHash; // * 100000 allows first 4 digits of result to represent proposalCounter and last 4 digits to represent hashCode
 
-        long timestamp = System.currentTimeMillis(); 
-        long processHash = Math.abs(myProcess.hashCode() % 10000); // tie break is process hash
-        return (timestamp * 10000) + processHash;
+        // long timestamp = System.currentTimeMillis(); 
+        // long processHash = Math.abs(myProcess.hashCode() % 10000); // tie break is process hash
+        // return (timestamp * 10000) + processHash;
+
+		long timestamp = System.currentTimeMillis(); 
+        long randomTieBreaker = (long)(Math.random() * 10000); // 0..9999
+        String tieBreakerStr = String.format("%04d", randomTieBreaker); //0000 ... 9999 
+        long invertedTimestamp = Long.MAX_VALUE - timestamp; // invert timestamp
+        return (invertedTimestamp * 10000) + tieBreakerStr;
+
+		
     }
 
     private Object[] formatValue(Object value)
