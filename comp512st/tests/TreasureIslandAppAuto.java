@@ -26,6 +26,7 @@ public class TreasureIslandAppAuto implements Runnable
 	Thread tiThread;
 	boolean keepExploring;
 	boolean updateDisplay;
+	boolean shuttingDown = false;
 
 	Paxos paxos;
 
@@ -55,7 +56,7 @@ public class TreasureIslandAppAuto implements Runnable
 
 	public void run()
 	{
-		while(keepExploring) // TODO: Make sure all the remaining messages are processed in the case of a graceful shutdown.
+		while(keepExploring || shuttingDown) // TODO: Make sure all the remaining messages are processed in the case of a graceful shutdown.
 		{
 			try
 			{
@@ -270,10 +271,34 @@ public class TreasureIslandAppAuto implements Runnable
 		logger.info("Done with all my moves ..."); // we just chill for a bit to ensure we got all the messages from others before we shutdown.
 																							// May have to increase this for higher maxmoves and smaller intervals.
 		try{ Thread.sleep(5000); } catch (InterruptedException ie) { logger.log(Level.SEVERE, "I got InterruptedException when I was chilling after all my moves.", ie); }
+		ta.shuttingDown = true;
 		ta.keepExploring = false;
 		ta.tiThread.join(1000); // Wait maximum 1s for the app to process any more incomming messages that was in the queue.
 		logger.info("Shutting down Paxos");
 		paxos.shutdownPaxos(); // shutdown paxos.
+		ta.shuttingDown = false;
+
+		try 
+		{
+			while (true)
+			{
+				Object[] move = (Object[]) paxos.acceptTOMsg();
+				if (move != null)
+				{
+					logger.fine("Received :" + Arrays.toString(move));
+					ta.move((Integer)move[0], (Character)move[1], ta.updateDisplay);
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+		catch(InterruptedException e)
+		{
+			logger.fine("[SHUTDOWN DRAIN] Final drain is finished.");
+		}
+
 		ta.tiThread.interrupt(); // interrupt the app thread if it has not terminated.
 		ta.displayIsland(); // display the final map
 		logger.info("Process terminated.");
