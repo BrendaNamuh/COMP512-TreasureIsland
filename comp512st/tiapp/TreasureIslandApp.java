@@ -163,8 +163,12 @@ public class TreasureIslandApp implements Runnable
 
 		logger.info("Shutting down Paxos");
 		ta.keepExploring = false;
-		ta.tiThread.interrupt();
 		ta.tiThread.join(3000); // Wait maximum 1s for the app to process any more incomming messages that was in the queue. INCREASED TO 2000
+		paxos.shutdownPaxos(); // shutdown paxos.
+
+        logger.info("[SHUTDOWN] [DRAIN] TEST");
+
+		// deliver any messages that have yet to be delivered
 	    try 
 		{
             Object[] msg;
@@ -181,7 +185,7 @@ public class TreasureIslandApp implements Runnable
              logger.warning("Main thread interrupted during graceful drain, continuing shutdown.");
              Thread.currentThread().interrupt();
         }
-		paxos.shutdownPaxos(); // shutdown paxos.
+
 		ta.tiThread.interrupt(); // interrupt the app thread if it has not terminated.
 		ta.displayIsland(); // display the final map
 		logger.info("Process terminated.");

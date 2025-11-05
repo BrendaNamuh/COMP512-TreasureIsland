@@ -41,6 +41,10 @@ public class Paxos
 
     private boolean shuttingDown = false;
 
+    //fairness attributes
+    private static long lastTimestamp = 0;
+    private static long counter = 0;
+    private static int consecutiveWins = 0;
 
     public Paxos(String myProcess, String[] allGroupProcesses, Logger logger, FailCheck failCheck) throws IOException, UnknownHostException 
     {
@@ -380,6 +384,26 @@ public class Paxos
             // Phase 3: Decide
             markAsConsensus(sequenceNum, val,true);
             consensus = true;
+
+            //     WORKS   but really decreases performance
+            if (consensus) 
+            {
+                consecutiveWins++;
+                if (consecutiveWins >= 3) 
+                {                    
+                    logger.info("[FAIRNESS] Proposer forced to sleep after 2 consecutive wins for fairness.");
+                    consecutiveWins = 0; // Reset the counter
+                    try 
+                    {
+                        Thread.sleep(300); // force pause
+                    } 
+                    catch (InterruptedException ignored) 
+                    {
+                        Thread.currentThread().interrupt();
+                    }                   
+                    //break; 
+                }
+            }
         }
         // DEBUG
         logger.info(debug("[PAXOS] end seq=" + sequenceNum + " consensus=" + consensus + " running=" + running));
@@ -526,11 +550,10 @@ public class Paxos
                 gcl.sendMsg(new Object[]{"ACCEPTED", proposalNum, seqNum, val}, sender); 
             }
         } 
-        else 
+        else // NOTE: if the proposer has already accepted a value it SHOULD include it in the accept message to let the rpopsoer know that a value has already been accepeted
         {
             // Ignore the prepare message because proposalNum is too small
-            logger.fine("Ignored accept from " + sender + " for seq " + seqNum + " with proposal " + proposalNum +
-                        " (already promised " + promised + ")");
+            logger.fine("Ignored accept from " + sender + " for seq " + seqNum + " with proposal " + proposalNum + " (already promised " + promised + ")");
         }
     }
 
@@ -644,6 +667,26 @@ public class Paxos
         return (timestamp * 10000) + random4Digit;
 
 		
+        // long timestamp = System.currentTimeMillis(); 
+        // long processHash = Math.abs(myProcess.hashCode() % 10000); // tie break is process hash
+        // return (timestamp * 10000) + processHash;
+
+        // this seems to block, will retry later
+        // long processHash = Math.abs(myProcess.hashCode() % 10000); // % 10000 limits value to 4 digits
+        // return (proposalCounter++ * 100000) + processHash; // * 100000 allows first 4 digits of result to represent proposalCounter and last 4 digits to represent hashCode
+
+        // long now = System.currentTimeMillis();
+        // if (now == lastTimestamp) 
+        // {
+        //     counter++;
+        // } 
+        // else 
+        // {
+        //     counter = 0;
+        //     lastTimestamp = now;
+        // }
+        // long processHash = Math.abs(myProcess.hashCode() % 10000);
+        // return (now * 100000) + (counter * 10000) + processHash;
     }
 
     private Object[] formatValue(Object value)
