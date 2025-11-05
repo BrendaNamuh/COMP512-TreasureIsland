@@ -639,16 +639,9 @@ public class Paxos
 
     private synchronized long generateBallotID() 
     {
-
-        // long timestamp = System.currentTimeMillis(); 
-        // long processHash = Math.abs(myProcess.hashCode() % 10000); // tie break is process hash
-        // return (timestamp * 10000) + processHash;
-
-		long timestamp = System.currentTimeMillis(); 
-        long randomTieBreaker = (long)(Math.random() * 10000); // 0..9999
-        String tieBreakerStr = String.format("%04d", randomTieBreaker); //0000 ... 9999 
-        long invertedTimestamp = Long.MAX_VALUE - timestamp; // invert timestamp
-        return (invertedTimestamp * 10000) + tieBreakerStr;
+        long timestamp = System.currentTimeMillis(); // current time
+        long random4Digit = 1000 + (long)(Math.random() * 9000); 
+        return (timestamp * 10000) + random4Digit;
 
 		
     }
