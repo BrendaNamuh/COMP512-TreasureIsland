@@ -21,7 +21,6 @@ public class TreasureIslandApp implements Runnable
 	boolean keepExploring;
 
 	Paxos paxos;
-	boolean shuttingDownStarted = false;
 
 	public TreasureIslandApp(Paxos paxos, Logger logger, String gameId, int numPlayers, int yourPlayer)
 	{
@@ -164,10 +163,33 @@ public class TreasureIslandApp implements Runnable
 		}
 
 		logger.info("Shutting down Paxos");
-		ta.shuttingDownStarted = true;
+		ta.keepExploring = false;
+		ta.tiThread.join(1000); // Wait maximum 1s for the app to process any more incomming messages that was in the queue.
 		paxos.shutdownPaxos(); // shutdown paxos.
-		ta.tiThread.join(6000); // Wait maximum 1s for the app to process any more incomming messages that was in the queue. INCREASED TO 2000
-		ta.keepExploring = false; // stop caaling acceptTOMsg() after shutdown
+
+		// drain the consensus values received during the shutdown grace period
+		try 
+		{
+			while (true)
+			{
+				Object[] move = (Object[]) paxos.acceptTOMsg();
+				if (move != null)
+				{
+					logger.fine("Received :" + Arrays.toString(move));
+					ta.move((Integer)move[0], (Character)move[1]);
+					ta.displayIsland();				
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+		catch(InterruptedException e)
+		{
+			logger.fine("[SHUTDOWN DRAIN] Final drain is finished.");
+		}
+
 		ta.tiThread.interrupt(); // interrupt the app thread if it has not terminated.
 		ta.displayIsland(); // display the final map
 		logger.info("Process terminated.");
