@@ -370,8 +370,8 @@ public class Paxos
             failCheck.checkFailure(FailCheck.FailureType.AFTERVALUEACCEPT);
 
             // // Phase 3: Decide
-            // markAsConsensus(sequenceNum, val,true);
-            // consensus = true;
+            markAsConsensus(sequenceNum, val,true);
+            consensus = true;
 
             // //     WORKS   but really decreases performance, but improves fairness
             // if (consensus) 
