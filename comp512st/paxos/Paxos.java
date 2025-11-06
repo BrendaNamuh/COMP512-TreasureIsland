@@ -383,8 +383,7 @@ public class Paxos
                     consecutiveWins = 0; // Reset the counter
                     try 
                     {
-                        //int sleepTime = (2000 - allGroupProcesses.length*100);
-                        int sleepTime = 2000;
+                        int sleepTime = (2000 - allGroupProcesses.length*100); // sleep time decreases as number of players increases
                         Thread.sleep(sleepTime); // force pause
                     } 
                     catch (InterruptedException ignored) 
