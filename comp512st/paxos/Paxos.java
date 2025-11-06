@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.*;
 
 public class Paxos 
@@ -36,22 +37,25 @@ public class Paxos
 
 	private final String[] allGroupProcesses;
     private final String myProcess;
+    private final long processID;
+
+    private static final AtomicLong sequenceCounter = new AtomicLong(0);
+
+    //fairness
+    private int consecutiveWins = 0;
 
     private static int currentSequenceNumber = 0; // next available slot
     private int nextDeliverySequence = 0; // next number that can be delivered to the app
 
     private boolean shuttingDown = false;
-    private boolean shutdownCompleted = false;
-
-
-    //fairness attributes
-    private static long lastTimestamp = 0;
-    private static long counter = 0;
-    private static int consecutiveWins = 0;
 
     public Paxos(String myProcess, String[] allGroupProcesses, Logger logger, FailCheck failCheck) throws IOException, UnknownHostException 
     {
         this.myProcess = myProcess;
+        //extract port for uid
+        int colonI = myProcess.lastIndexOf(':'); // index colon
+        String portString = myProcess.substring(colonI + 1);
+        this.processID = Long.parseLong(portString);
         this.failCheck = failCheck;
         this.logger = logger;
         this.gcl = new GCL(myProcess, allGroupProcesses, null, logger);
@@ -199,8 +203,6 @@ public class Paxos
         gcl.shutdownGCL();
 
         logger.info("Paxos shutdown complete. Consensus values: " + consensusValues); // should be empty because of the drain
-
-        shutdownCompleted = true;
     }
 
     // =======================================
@@ -367,11 +369,11 @@ public class Paxos
 
             failCheck.checkFailure(FailCheck.FailureType.AFTERVALUEACCEPT);
 
-            // Phase 3: Decide
-            markAsConsensus(sequenceNum, val,true);
-            consensus = true;
+            // // Phase 3: Decide
+            // markAsConsensus(sequenceNum, val,true);
+            // consensus = true;
 
-            //     WORKS   but really decreases performance, but improves fairness
+            // //     WORKS   but really decreases performance, but improves fairness
             // if (consensus) 
             // {
             //     consecutiveWins++;
@@ -381,7 +383,7 @@ public class Paxos
             //         consecutiveWins = 0; // Reset the counter
             //         try 
             //         {
-            //             Thread.sleep(400); // force pause
+            //             Thread.sleep(700); // force pause
             //         } 
             //         catch (InterruptedException ignored) 
             //         {
@@ -644,31 +646,14 @@ public class Paxos
 
     private synchronized long generateBallotID() 
     {
-        long timestamp = System.currentTimeMillis(); // current time
-        long random4Digit = 1000 + (long)(Math.random() * 9000); 
-        return (timestamp * 10000) + random4Digit; // does this ensure that ballotIDs are unique??
+        long timestamp = System.currentTimeMillis(); // current time, making it increasing but only changes every milisecond
+        long sequence = sequenceCounter.incrementAndGet() % 1000; // atomic long that increments everytime this is called, single process generates multiple IDs within the same millisecond
+        return (timestamp * 100000 * 1000) + (processID * 1000) + sequence; // timestamp must dominate and we assume processID is smaller than 100,000 and sequence is less than 1000
 
-		
-        // long timestamp = System.currentTimeMillis(); 
-        // long processHash = Math.abs(myProcess.hashCode() % 10000); // tie break is process hash
-        // return (timestamp * 10000) + processHash;
-
-        // this seems to block, will retry later
-        // long processHash = Math.abs(myProcess.hashCode() % 10000); // % 10000 limits value to 4 digits
-        // return (proposalCounter++ * 100000) + processHash; // * 100000 allows first 4 digits of result to represent proposalCounter and last 4 digits to represent hashCode
-
-        // long now = System.currentTimeMillis();
-        // if (now == lastTimestamp) 
-        // {
-        //     counter++;
-        // } 
-        // else 
-        // {
-        //     counter = 0;
-        //     lastTimestamp = now;
-        // }
-        // long processHash = Math.abs(myProcess.hashCode() % 10000);
-        // return (now * 100000) + (counter * 10000) + processHash;
+        //previous implementation , NOT UNIQUE
+        //long timestamp = System.currentTimeMillis(); // current time, making it increasing
+        //long random4Digit = 1000 + (long)(Math.random() * 9000); 
+        //return (timestamp * 10000) + random4Digit; // does this ensure that ballotIDs are unique?? NO
     }
 
     private Object[] formatValue(Object value)
