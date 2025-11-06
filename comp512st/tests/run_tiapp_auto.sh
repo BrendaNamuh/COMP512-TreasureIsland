@@ -12,21 +12,21 @@ gameid=game-$group-99
 
 #TODO edit these entries to put the name of the server that you are using and the associated ports.
 # Remember to start the script from this host
-export autotesthost=tr-open-15.cs.mcgill.ca
+export autotesthost=tr-open-23.cs.mcgill.ca
 # player1 -> process 1, player 2 -> process 2, etc .. add more depending on how many players are playing.
 # Script automatically counts the variables to figure out the number of players.
-export process1=tr-open-15.cs.mcgill.ca:401$group
-export process2=tr-open-15.cs.mcgill.ca:402$group
-export process3=tr-open-15.cs.mcgill.ca:403$group
-export process4=tr-open-15.cs.mcgill.ca:404$group
-export process5=tr-open-15.cs.mcgill.ca:405$group
-export process6=tr-open-15.cs.mcgill.ca:406$group
-export process7=tr-open-15.cs.mcgill.ca:407$group
-export process8=tr-open-15.cs.mcgill.ca:408$group
-export process9=tr-open-15.cs.mcgill.ca:409$group
+export process1=tr-open-23.cs.mcgill.ca:401$group
+export process2=tr-open-23.cs.mcgill.ca:402$group
+export process3=tr-open-23.cs.mcgill.ca:403$group
+export process4=tr-open-23.cs.mcgill.ca:404$group
+#export process5=tr-open-23.cs.mcgill.ca:405$group
+#export process6=tr-open-23.cs.mcgill.ca:406$group
+#export process7=tr-open-23.cs.mcgill.ca:407$group
+#export process8=tr-open-23.cs.mcgill.ca:408$group
+#export process9=tr-open-23.cs.mcgill.ca:409$group
 
 #TODO update these values as needed
-maxmoves=100 interval=5 randseed=2222
+maxmoves=100 interval=1 randseed=2222
 #TODO IF (and only if) you want to simulate failures, enable this for corresponding player numbers.
 #export failmode_N=RECEIVEPROPOSE
 #export failmode_N=AFTERSENDVOTE

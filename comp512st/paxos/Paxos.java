@@ -373,7 +373,7 @@ public class Paxos
             markAsConsensus(sequenceNum, val,true);
             consensus = true;
 
-            // //     WORKS   but really decreases performance, but improves fairness
+            //     WORKS   but really decreases performance, but improves fairness
             if (consensus) 
             {
                 consecutiveWins++;
@@ -649,11 +649,6 @@ public class Paxos
         long timestamp = System.currentTimeMillis(); // current time, making it increasing but only changes every milisecond
         long sequence = sequenceCounter.incrementAndGet() % 1000; // atomic long that increments everytime this is called, single process generates multiple IDs within the same millisecond
         return (timestamp * 100000 * 1000) + (processID * 1000) + sequence; // timestamp must dominate and we assume processID is smaller than 100,000 and sequence is less than 1000
-
-        //previous implementation , NOT UNIQUE
-        //long timestamp = System.currentTimeMillis(); // current time, making it increasing
-        //long random4Digit = 1000 + (long)(Math.random() * 9000); 
-        //return (timestamp * 10000) + random4Digit; // does this ensure that ballotIDs are unique?? NO
     }
 
     private Object[] formatValue(Object value)
