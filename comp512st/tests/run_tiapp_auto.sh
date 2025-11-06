@@ -12,21 +12,21 @@ gameid=game-$group-99
 
 #TODO edit these entries to put the name of the server that you are using and the associated ports.
 # Remember to start the script from this host
-export autotesthost=tr-open-10.cs.mcgill.ca
+export autotesthost=tr-open-15.cs.mcgill.ca
 # player1 -> process 1, player 2 -> process 2, etc .. add more depending on how many players are playing.
 # Script automatically counts the variables to figure out the number of players.
-export process1=${tr-open-11.cs.mcgill.ca}:401$group
-export process2=${tr-open-12.cs.mcgill.ca}:402$group
-#export process3=${autotesthost}:403$group
-#export process4=${autotesthost}:404$group
-#export process5=${autotesthost}:405$group
-#export process6=${autotesthost}:406$group
-#export process7=${autotesthost}:407$group
-#export process8=${autotesthost}:408$group
-#export process9=${autotesthost}:409$group
+export process1=tr-open-15.cs.mcgill.ca:401$group
+export process2=tr-open-15.cs.mcgill.ca:402$group
+export process3=tr-open-15.cs.mcgill.ca:403$group
+export process4=tr-open-15.cs.mcgill.ca:404$group
+export process5=tr-open-15.cs.mcgill.ca:405$group
+export process6=tr-open-15.cs.mcgill.ca:406$group
+export process7=tr-open-15.cs.mcgill.ca:407$group
+export process8=tr-open-15.cs.mcgill.ca:408$group
+export process9=tr-open-15.cs.mcgill.ca:409$group
 
 #TODO update these values as needed
-maxmoves=100 interval=100 randseed=2222
+maxmoves=100 interval=5 randseed=2222
 #TODO IF (and only if) you want to simulate failures, enable this for corresponding player numbers.
 #export failmode_N=RECEIVEPROPOSE
 #export failmode_N=AFTERSENDVOTE
@@ -34,7 +34,7 @@ maxmoves=100 interval=100 randseed=2222
 #export failmode_N=AFTERBECOMINGLEADER
 #export failmode_N=AFTERVALUEACCEPT
 #For example this enabled failmode AFTERBECOMINGLEADER for player/process 2 (only one failmode can be set per process). It is important to have the export.
-export failmode_2=AFTERBECOMINGLEADER
+#export failmode_2=AFTERBECOMINGLEADER
 
 # Check if this script is being exectuted on the correct server.
 if [[ $autotesthost != $(hostname) ]]

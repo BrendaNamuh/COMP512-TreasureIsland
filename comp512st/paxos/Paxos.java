@@ -101,10 +101,6 @@ public class Paxos
     //Delivering messages to application. Loops until there a new consensusVal is returned
     public Object acceptTOMsg() throws InterruptedException 
     {
-        if (shuttingDown)
-        {
-            logger.warning("[DELIVERY WHILE SHUTDOWN]  AcceptTOMsg() was called during shutdown. Next number to deliver: " + nextDeliverySequence);
-        }
         while (true) 
         {
             synchronized (consensusValues) 
@@ -136,8 +132,6 @@ public class Paxos
     public void shutdownPaxos() 
     {
         shuttingDown = true;
-
-        logger.warning(debug("[SHUTDOWN] start; running=" + running+ " pendingLocalProposal=" + (pendingLocalProposal != null) + " queueSize=" + clientRequestQueue.size() + " consensusCount=" + consensusValues.size()));
         
         listenerKeepRunning = true; // we want to let it listen for incoming messages
         running = false; // stop new paxos rounds, stops the worker thread
@@ -167,35 +161,17 @@ public class Paxos
 
         // wait and hope that all the incoming decided messages have time to be received
         //  DEBUG
-        logger.warning(debug("[SHUTDOWN] starting grace wait; consensusCount=" + consensusValues.size()));
+        logger.warning("[SHUTDOWN] starting grace wait; consensusCount=" + consensusValues.size());
         try 
         {
-            Thread.sleep(7000); // short grace period for any final DECIDE messages
+            Thread.sleep(7000); // long grace period to account for very fast players
         } 
         catch (InterruptedException e) 
         {
             Thread.currentThread().interrupt();
         }
         // DEBUG
-        logger.warning(debug("[SHUTDOWN] grace wait over; consensusCount=" + consensusValues.size()));
-
-
-        // let threads finish working
-        // if (listenerThread != null && listenerThread.isAlive()) 
-        // {
-        //     listenerKeepRunning = false;
-        //     logger.fine("Waiting for listener thread to finish before shutdown");
-        //     listenerThread.interrupt();        
-        //     try 
-        //     {
-        //         logger.fine("Waiting for listener thread to finish.");
-        //         listenerThread.join(2000); // Wait up to 2 seconds for it to die gracefully
-        //     } 
-        //     catch (InterruptedException e) 
-        //     {
-        //         Thread.currentThread().interrupt();
-        //     }
-        // }
+        logger.warning("[SHUTDOWN] grace wait over; consensusCount=" + consensusValues.size());
 
         listenerKeepRunning = false; 
         
@@ -222,7 +198,7 @@ public class Paxos
         //Ready to shutdown process
         gcl.shutdownGCL();
 
-        logger.info("Paxos shutdown complete. Consensus values: " + consensusValues); 
+        logger.info("Paxos shutdown complete. Consensus values: " + consensusValues); // should be empty because of the drain
 
         shutdownCompleted = true;
     }
@@ -235,7 +211,7 @@ public class Paxos
     {
         listenerThread = new Thread(() -> 
         {
-            while (running || listenerKeepRunning) // || !Thread.currentThread().isInterrupted()) 
+            while (running || listenerKeepRunning) 
             {
                 try 
                 {
@@ -268,11 +244,11 @@ public class Paxos
         workerThread = new Thread(()->
         {
             logger.info("Paxos Worker thread started. Ready to propose.");
-            while (running) // || !clientRequestQueue.isEmpty())
+            while (running)
             {
                 try
                 {
-                    Object[] value = clientRequestQueue.poll(10, TimeUnit.MILLISECONDS); // evry 10ms, thread retrieves a new request (if there's any)
+                    Object[] value = clientRequestQueue.poll(10, TimeUnit.MILLISECONDS); // evry 10ms, thread retrieves a new request (if there's any), we could adjust this according to interval between requests
                     if (value != null)
                     {
                         runPaxos(value);
@@ -340,13 +316,10 @@ public class Paxos
         int sequenceNum = currentSequenceNumber;
         int playerNum = (int) value[0];
 
-        // DEBUG
-        logger.info(debug("[PAXOS] start seq=" + sequenceNum + " running=" + running));
-
-        while (!consensus && (running))// || shuttingDown)) 
+        while (!consensus && (running))
         {
             long proposalNum = generateBallotID();
-            logger.info("Player "+playerNum+" - Starting Paxos for seq=" + sequenceNum + ", proposal=" + proposalNum);
+            logger.info("[PAXOS] Player "+ playerNum +" is starting Paxos for seq=" + sequenceNum + ", proposal=" + proposalNum);
 
             promiseCount.remove(sequenceNum); // clear
             highestAcceptedBallot.remove(sequenceNum); 
@@ -357,13 +330,12 @@ public class Paxos
 
             if (!running) // shutdown
             {
-                logger.warning("[DEBUG] [PAXOS] Shutdown. Just finished paxos instance for seq=" + sequenceNum + " and then.");
                 return;
             }
 
             if (!majorityPromised) 
             {
-                logger.warning("Player " + playerNum +" - Prepare phase failed, retrying...");
+                logger.warning("[PAXOS] Player " + playerNum +" failed the prepare phase, retrying...");
                 continue;
             }
 
@@ -374,12 +346,12 @@ public class Paxos
 
             if (acceptedVal != null) // if there is a previously accepted val, proposer must propose that one
             { 
-                logger.info("Player "+ playerNum +" - Proposing previously accepted value (" + acceptedVal + ") from ballotID " + acceptedNum);
+                logger.info("[PAXOS] Player "+ playerNum +" proposes previously accepted value (" + acceptedVal + ") from ballotID " + acceptedNum);
                 val = acceptedVal; 
             } 
             else 
             {
-                logger.info("Player "+ playerNum +" - Proposing client's value: " + ((Object[])value)[1]);
+                logger.info("[PAXOS] Player "+ playerNum +" proposes client's value: " + ((Object[])value)[1]);
             }
             
             highestAcceptedBallot.remove(sequenceNum); // clear
@@ -389,7 +361,7 @@ public class Paxos
             boolean majorityAccepted = phase2Propose(proposalNum, sequenceNum, val);
             if (!majorityAccepted) 
             {
-                logger.warning("Accept phase failed, retrying...");
+                logger.warning("[PAXOS] Accept phase failed for player " + playerNum );
                 continue;
             }
 
@@ -399,7 +371,7 @@ public class Paxos
             markAsConsensus(sequenceNum, val,true);
             consensus = true;
 
-            //     WORKS   but really decreases performance
+            //     WORKS   but really decreases performance, but improves fairness
             // if (consensus) 
             // {
             //     consecutiveWins++;
@@ -419,9 +391,6 @@ public class Paxos
             //     }
             // }
         }
-        // DEBUG
-        logger.info(debug("[PAXOS] end seq=" + sequenceNum + " consensus=" + consensus + " running=" + running));
-
     }
 
     // =======================================
@@ -596,8 +565,6 @@ public class Paxos
     {
         int seqNum = (int) data[2];
         Object val = data[3];
-        // DEBUG
-        logger.info(debug("[INCOMING] DECIDE received for seq=" + seqNum + " val=" + Arrays.toString(data)));
         markAsConsensus(seqNum, val,false);
 
         synchronized (broadcastLock)
@@ -623,21 +590,17 @@ public class Paxos
                 currentSequenceNumber = seqNum + 1; // upon decision, update the next available slot 
             }
             consensusValues.notifyAll(); // wake acceptTOMsg() - this is the notification that the consensusValues has been updated
-            logger.fine("[CONSENSUS] consensus value changed - notification sent!");
         }
         synchronized(broadcastLock)
         {
             pendingLocalProposal = null;
             broadcastLock.notifyAll();
         }
-        if (isBroadcastingConsensus) // && running)
+        if (isBroadcastingConsensus)
         {
             try 
             {
-                //DEBUG
-                logger.fine("[DECIDE] Broadcasting DECIDE for seq=" + seqNum);
-                gcl.broadcastMsg(new Object[]{"DECIDE",null, seqNum, val});
-                logger.info(debug("[DECIDE] broadcast done seq=" + seqNum));
+                gcl.broadcastMsg(new Object[]{"DECIDE",null, seqNum, val}); // null is for the ballotID, there's no ballotID in decide message
             }
             catch (Exception e)
             {
@@ -660,7 +623,6 @@ public class Paxos
 
     private boolean waitForMajority(Map<Integer, Integer> map, int seqNum) 
     {
-        //int majority = (int) Math.floor(gcl.getAllMembers().length / 2.0) + 1;
 		int majority = (int) Math.floor(allGroupProcesses.length / 2.0) + 1;
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() - start < 3000) // 3-second timeout
@@ -739,12 +701,6 @@ public class Paxos
         }
 
         return new Object[]{null, value};
-    }
-
-    private String debug(String msg) 
-    {
-        return "[DEBUG] [proc=" + myProcess + " thread=" + Thread.currentThread().getName() + "] " + msg;
-    }
-    
+    }   
 }
 
