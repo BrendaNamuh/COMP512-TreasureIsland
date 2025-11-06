@@ -374,24 +374,25 @@ public class Paxos
             consensus = true;
 
             // //     WORKS   but really decreases performance, but improves fairness
-            // if (consensus) 
-            // {
-            //     consecutiveWins++;
-            //     if (consecutiveWins >= 3) 
-            //     {                    
-            //         logger.info("[FAIRNESS] Proposer forced to sleep after 2 consecutive wins for fairness.");
-            //         consecutiveWins = 0; // Reset the counter
-            //         try 
-            //         {
-            //             Thread.sleep(700); // force pause
-            //         } 
-            //         catch (InterruptedException ignored) 
-            //         {
-            //             Thread.currentThread().interrupt();
-            //         }                   
-            //         //break; 
-            //     }
-            // }
+            if (consensus) 
+            {
+                consecutiveWins++;
+                if (consecutiveWins >= 3) 
+                {                    
+                    logger.info("[FAIRNESS] Proposer forced to sleep after 2 consecutive wins for fairness.");
+                    consecutiveWins = 0; // Reset the counter
+                    try 
+                    {
+                        //int sleepTime = (2000 - allGroupProcesses.length*100);
+                        int sleepTime = 2000;
+                        Thread.sleep(sleepTime); // force pause
+                    } 
+                    catch (InterruptedException ignored) 
+                    {
+                        Thread.currentThread().interrupt();
+                    }                   
+                }
+            }
         }
     }
 
